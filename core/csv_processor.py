@@ -16,9 +16,13 @@ OMISSION LOGIC (applied to every row):
 import csv
 import ipaddress
 import logging
+import sys
 from io import StringIO
 from pathlib import Path
 from typing import Callable, Optional
+
+# Increase CSV field size limit to handle huge Nessus "Plugin Output" fields
+csv.field_size_limit(min(sys.maxsize, 2147483646))
 
 from config import (
     ALWAYS_OMIT,
