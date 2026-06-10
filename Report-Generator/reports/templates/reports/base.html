@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Nessus Report Generator — Convert vulnerability scan CSV exports into executive-ready Excel reports.">
+    <title>{% block title %}Nessus Report Generator{% endblock %}</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- ─── Sidebar ─── -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+            </div>
+            <h1 class="brand-title">VAPT<span class="brand-accent">Platform</span></h1>
+            <span class="brand-version">v3.0.0</span>
+        </div>
+
+        <div class="sidebar-nav">
+            <a href="{% url 'system_dashboard' %}" class="nav-link {% if active_page == 'index' or not active_page %}is-active{% endif %}" id="nav-home">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                <span>System Dashboard</span>
+            </a>
+            
+            <div style="margin: 16px 0 8px 16px; font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">
+                Reports
+            </div>
+            
+
+            <a href="{% url 'reports:new_report' %}" class="nav-link {% if active_page == 'new_report' %}is-active{% endif %}" id="nav-new-report">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+                <span>New Report</span>
+            </a>
+            <a href="{% url 'reports:rescan_report' %}" class="nav-link {% if active_page == 'rescan' %}is-active{% endif %}" id="nav-rescan">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+                <span>Rescan Compare</span>
+            </a>
+        </div>
+
+        <div class="sidebar-footer">
+            <p>Created by Ashraful Alim</p>
+        </div>
+    </nav>
+
+    <!-- ─── Main Content ─── -->
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

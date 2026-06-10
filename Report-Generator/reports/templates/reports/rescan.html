@@ -1,0 +1,155 @@
+{% extends "reports/base.html" %}
+{% block title %}Rescan Comparison — Nessus Report Generator{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Rescan Comparison</h1>
+    <p class="page-subtitle">Compare new scan results against a previous report to track remediation</p>
+</div>
+
+{% if error %}
+<div class="alert alert--error" id="error-banner">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+    <div>
+        <strong>{{ error }}</strong>
+        {% if details %}<p class="alert-details">{{ details }}</p>{% endif %}
+    </div>
+</div>
+{% endif %}
+
+<form method="post" enctype="multipart/form-data" class="report-form" id="rescan-form">
+    {% csrf_token %}
+
+    <!-- Previous Report Upload -->
+    <div class="form-section">
+        <label class="form-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Previous Report (Excel)
+        </label>
+        <div class="dropzone dropzone--single" id="prev-dropzone">
+            <input type="file" name="previous_report" accept=".xlsx" class="dropzone-input" id="prev-input">
+            <div class="dropzone-content">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="dropzone-icon"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                <p class="dropzone-text">Drop previous .xlsx report or <span class="dropzone-link">browse</span></p>
+                <p class="dropzone-hint">The Excel report generated from your last scan</p>
+            </div>
+            <div class="dropzone-files" id="prev-file-list"></div>
+        </div>
+    </div>
+
+    <!-- New CSV Upload -->
+    <div class="form-section">
+        <label class="form-label">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            New Scan Data (CSV)
+        </label>
+        <div class="dropzone" id="csv-dropzone">
+            <input type="file" name="csv_files" multiple accept=".csv" class="dropzone-input" id="csv-input">
+            <div class="dropzone-content">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="dropzone-icon"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <p class="dropzone-text">Drop new CSV files here or <span class="dropzone-link">browse</span></p>
+                <p class="dropzone-hint">Supports multiple files • .csv format</p>
+            </div>
+            <div class="dropzone-files" id="csv-file-list"></div>
+        </div>
+    </div>
+
+    <!-- Output Name -->
+    <div class="form-section">
+        <label class="form-label" for="output-name">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Output Filename
+        </label>
+        <div class="input-group">
+            <input type="text" name="output_name" id="output-name" class="form-input" placeholder="e.g., Nessus_Rescan_2025" autocomplete="off">
+            <span class="input-suffix">.xlsx</span>
+        </div>
+        <p class="form-hint">Leave blank to auto-generate a timestamped filename</p>
+    </div>
+
+    <!-- Submit -->
+    <button type="submit" class="btn btn--primary btn--lg" id="btn-generate">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+        Generate Comparison Report
+    </button>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    function setupDropzone(dropzoneId, inputId, listId, isMultiple) {
+        const dz = document.getElementById(dropzoneId);
+        const input = document.getElementById(inputId);
+        const list = document.getElementById(listId);
+        let dt = new DataTransfer();
+
+        ['dragenter', 'dragover'].forEach(evt => {
+            dz.addEventListener(evt, e => { e.preventDefault(); dz.classList.add('dropzone--active'); });
+        });
+        ['dragleave', 'drop'].forEach(evt => {
+            dz.addEventListener(evt, e => { e.preventDefault(); dz.classList.remove('dropzone--active'); });
+        });
+        
+        dz.addEventListener('drop', e => {
+            if (!isMultiple) dt = new DataTransfer();
+            Array.from(e.dataTransfer.files).forEach(file => dt.items.add(file));
+            input.files = dt.files;
+            updateList();
+        });
+        
+        input.addEventListener('change', e => {
+            if (!isMultiple) dt = new DataTransfer();
+            Array.from(input.files).forEach(file => dt.items.add(file));
+            input.files = dt.files;
+            updateList();
+        });
+
+        // Make the whole dropzone clickable
+        dz.addEventListener('click', (e) => {
+            if (e.target !== input) {
+                input.click();
+            }
+        });
+
+        function updateList() {
+            list.innerHTML = '';
+            if (input.files.length === 0) return;
+            Array.from(input.files).forEach((f, i) => {
+                const div = document.createElement('div');
+                div.className = 'file-item';
+                div.innerHTML = `<span class="file-name">${f.name}</span>
+                                 <span class="file-size">${(f.size / 1024).toFixed(1)} KB
+                                 <button type="button" data-idx="${i}" class="remove-file" style="margin-left:8px; color:var(--accent-danger); background:none; border:none; cursor:pointer;">×</button></span>`;
+                list.appendChild(div);
+            });
+            
+            // Add remove handlers
+            list.querySelectorAll('.remove-file').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const idx = parseInt(this.getAttribute('data-idx'));
+                    const newDt = new DataTransfer();
+                    Array.from(input.files).forEach((file, i) => {
+                        if (i !== idx) newDt.items.add(file);
+                    });
+                    dt = newDt;
+                    input.files = dt.files;
+                    updateList();
+                });
+            });
+        }
+    }
+
+    setupDropzone('prev-dropzone', 'prev-input', 'prev-file-list', false);
+    setupDropzone('csv-dropzone', 'csv-input', 'csv-file-list', true);
+
+    const form = document.getElementById('rescan-form');
+    const btn = document.getElementById('btn-generate');
+    form.addEventListener('submit', () => {
+        btn.disabled = true;
+        btn.innerHTML = `<span class="spinner"></span> Processing...`;
+    });
+})();
+</script>
+{% endblock %}
