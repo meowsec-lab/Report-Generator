@@ -8,6 +8,7 @@ A Django web application that converts Nessus vulnerability scan CSV exports int
 # 1. Create virtual environment
 python3 -m venv .venv
 source .venv/bin/activate
+.\.venv\Scripts\Activate.ps1 # Run this, if you are running code from PowerShell
 
 # 2. Install dependencies
 pip install -r requirements.txt
