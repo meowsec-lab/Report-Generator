@@ -1,0 +1,14 @@
+# Nessus Report Generator (Django) — Python Dependencies
+# Install: pip install -r requirements.txt
+
+# Web framework
+django>=4.2
+
+# Core processing (carried over from desktop app)
+xlsxwriter>=3.1.0
+openpyxl>=3.1.0
+chardet>=5.0.0
+
+# Testing
+pytest>=7.0.0
+pytest-django>=4.5.0
